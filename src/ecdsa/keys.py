@@ -9,7 +9,7 @@ from .util import string_to_number, number_to_string, randrange
 from .util import sigencode_string, sigdecode_string
 from .util import oid_ecPublicKey, encoded_oid_ecPublicKey
 from six import PY3, b
-from hashlib import sha1
+from hashlib import sha1,sha256
 
 
 class BadSignatureError(Exception):
@@ -54,11 +54,11 @@ class VerifyingKey:
         return klass.from_public_point(point, curve, hashfunc)
 
     @classmethod
-    def from_pem(klass, string):
-        return klass.from_der(der.unpem(string))
+    def from_pem(klass, string ,hashfunc = sha1):
+        return klass.from_der(der.unpem(string),hashfunc = hashfunc)
 
     @classmethod
-    def from_der(klass, string):
+    def from_der(klass, string, hashfunc = sha1):
         # [[oid_ecPublicKey,oid_curve], point_str_bitstring]
         s1, empty = der.remove_sequence(string)
         if empty != b(""):
@@ -78,7 +78,7 @@ class VerifyingKey:
             raise der.UnexpectedDER("trailing junk after pubkey pointstring: %s" %
                                     binascii.hexlify(empty))
         assert point_str.startswith(b("\x00\x04"))
-        return klass.from_string(point_str[2:], curve)
+        return klass.from_string(point_str[2:], curve,hashfunc = hashfunc)
 
     @classmethod
     def from_public_key_recovery(klass, signature, data, curve, hashfunc=sha1, sigdecode=sigdecode_string):
